@@ -18,3 +18,5 @@ packages/
 # OS Specific
 .DS_STORE*
 [Tt]humbs.db
+Resources/GameData/kOS/Plugins/
+
