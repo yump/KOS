@@ -137,6 +137,7 @@ namespace kOS.Suffixed
             AddSuffix(new[] { "PILOTNEUTRAL" }, new Suffix<bool>(() => Vessel == FlightGlobals.ActiveVessel && FlightInputHandler.state.isNeutral));
 
             AddSuffix(new[] { "PILOTROTATION" }, new Suffix<Vector>(GetPilotRotation));
+            AddSuffix(new[] { "PILOTNATIVEROTATION" }, new Suffix<Vector>(GetPilotNativeRotation));
             AddSuffix(new[] { "PILOTTRANSLATION" }, new Suffix<Vector>(GetPilotTranslation));
 
             AddSuffix(new[] { "PILOTMAINTHROTTLE" }, new ClampSetSuffix<float>(() => ReadPilot(ref FlightInputHandler.state.mainThrottle), value =>
@@ -164,6 +165,7 @@ namespace kOS.Suffixed
             AddSuffix(new[] { "PITCH" }, new ClampSetSuffix<float>(() => pitch, value => pitch = value, -1, 1));
             AddSuffix(new[] { "PITCHTRIM" }, new ClampSetSuffix<float>(() => pitchTrim, value => pitchTrim = value, -1, 1));
             AddSuffix(new[] { "ROTATION" }, new SetSuffix<Vector>(() => new Vector(yaw, pitch, roll), SetRotation));
+            AddSuffix(new[] { "NATIVEROTATION" }, new SetSuffix<Vector>(() => new Vector(-pitch, yaw, -roll), SetNativeRotation));
 
             //TRANSLATION
             AddSuffix(new[] { "FORE" }, new ClampSetSuffix<float>(() => fore, value => fore = value, -1, 1));
@@ -215,6 +217,16 @@ namespace kOS.Suffixed
             return Vector.Zero;
         }
 
+        private Vector GetPilotNativeRotation()
+        {
+            //Grab the pilot inputs in a form compatible with SetNativeRotation().
+            if (Vessel == FlightGlobals.ActiveVessel)
+            {
+                return new Vector(-FlightInputHandler.state.pitch, FlightInputHandler.state.yaw, -FlightInputHandler.state.roll);
+            }
+            return Vector.Zero;
+        }
+
         private void SetTranslation(Vector vectorValue)
         {
             if (vectorValue == null)
@@ -244,6 +256,26 @@ namespace kOS.Suffixed
                 yaw = (float)Safe.Utilities.Math.Clamp(vectorValue.X, -1, 1);
                 pitch = (float)Safe.Utilities.Math.Clamp(vectorValue.Y, -1, 1);
                 roll = (float)Safe.Utilities.Math.Clamp(vectorValue.Z, -1, 1);
+            }
+        }
+
+        private void SetNativeRotation(Vector vectorValue)
+        {
+            //KSP's pitch and roll controls are inverted relative to euler angles of
+            //rotations in its native coordinate system.  This function inverts that
+            //inversion.  It also uses the (pitch, yaw, roll) order for its vector 
+            //argument, which is the same as the rotation constructor.
+            if (vectorValue == null)
+            {
+                pitch = 0.0f;
+                yaw = 0.0f;
+                roll = 0.0f;
+            }
+            else
+            {
+                pitch = -(float)Safe.Utilities.Math.Clamp(vectorValue.X, -1, 1);
+                yaw = (float)Safe.Utilities.Math.Clamp(vectorValue.Y, -1, 1);
+                roll = -(float)Safe.Utilities.Math.Clamp(vectorValue.Z, -1, 1);
             }
         }
 
